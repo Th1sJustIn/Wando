@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Hello, I'm Wando</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+      <button class="mic-toggle" id="mic"> 
+          <span class="material-icons">mic</span>
+    </div>
+      <div class="barrier">
+        <audio class="playback" src="../speech.mp3"></audio>
+
+    </div>
+    
+
+
+    </main>
+
+        <section class="words">
+          <h1>Hi! I'm Wando.<br> Start speaking to get started</h1>
+          <div class="container">
+            <div class="texts">
+            </div>
+          </div>
+        </section>
+      </body>
+
+        <footer>
+          <div class="background">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100%" height="100%" viewBox="0 0 1600 900">
+              <defs>
+                <linearGradient id="bg" x2="0%" y2="100%">
+                  <stop offset="0%" style="stop-color: rgba(53, 127, 242, 0.6)"></stop>
+                  <stop offset="100%" style="stop-color: rgba(38, 89, 190, 0.06)"></stop>
+                </linearGradient>
+                <path id="wave" fill="url(#bg)" d="M-363.852,502.589c0,0,236.988-41.997,505.475,0
+              s371.981,38.998,575.971,0s293.985-39.278,505.474,5.859s493.475,48.368,716.963-4.995v560.106H-363.852V502.589z" />
+              </defs>
+              <g>
+                <use xlink:href="#wave" opacity=".3">
+                  <animateTransform attributeName="transform" attributeType="XML" type="translate" dur="8s" calcMode="spline" values="270 230; -334 180; 270 230" keyTimes="0; .5; 1" keySplines="0.42, 0, 0.58, 1.0;0.42, 0, 0.58, 1.0" repeatCount="indefinite" />
+                </use>
+                <use xlink:href="#wave" opacity=".6">
+                  <animateTransform attributeName="transform" attributeType="XML" type="translate" dur="6s" calcMode="spline" values="-270 230;243 220;-270 230" keyTimes="0; .6; 1" keySplines="0.42, 0, 0.58, 1.0;0.42, 0, 0.58, 1.0" repeatCount="indefinite" />
+                </use>
+                <use xlink:href="#wave" opacty=".9">
+                  <animateTransform attributeName="transform" attributeType="XML" type="translate" dur="4s" calcMode="spline" values="0 230;-140 200;0 230" keyTimes="0; .4; 1" keySplines="0.42, 0, 0.58, 1.0;0.42, 0, 0.58, 1.0" repeatCount="indefinite" />
+                </use>
+              </g>
+            </svg>
+          </div>
+        
+        </footer>
+
+        
+  <script>
+const texts = document.querySelector(".texts");
+const mic_btn = document.querySelector("#mic");
+const playback = document.querySelector(".playback");
+const source = document.querySelector(".audio");
+const symbol = document.querySelector(".material-icons");
+let can_record = false;
+let is_recording = false 
+window.SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+  let content = "";
+  let p = document.createElement("p");
+
+
+const recognition = new SpeechRecognition();
+recognition.interimResults = true;
+recognition.continuous = true;
+
+
+    mic_btn.addEventListener('click', ToggleMic);
+
+    // function ToggleMic(){
+    //   fetch('/micClick', {
+    //             method: 'POST'
+    //         })
+    // };
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+      async function SetupAudio(){
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+        await navigator.mediaDevices
+            .getUserMedia({
+                audio: true
+            })
+            .then((result) =>{
+                can_record = true;
+                
+            })
+            .catch(err => {
+                console.error(err)
+            });
+    }
+    console.log(can_record);
+
+      }
+        SetupAudio()
+      async function start(){
+  
+          const response = await fetch('/startConvo', {
+          method: 'POST'
+
+              
+
+
+            }).then(response => response.json())
+            .then(async data => {
+    console.log('Data received from server:', data);
+        texts.appendChild(p);
+
+                p.innerText = data.text;
+
+    // Handle the received data here
+   
+    // const response = await fetch('/getAudio', {
+    //       method: 'POST'
+
+    //         }).then(data => {
+    //          
+    //         console.log(audio);
+    //         })
+
+     console.log(data.audio)
+    //  console.log(source.src);
+    //  source.src = data.audio;
+    //  console.log(source);
+    //  playback.play();
+    
+            
+    
+  });       
+               
+      }
+        
+        
+      
+      //start();
+       
+
+    });
+        
+
+
+    function ToggleMic(){
+    if(!can_record) return;
+
+    is_recording = !is_recording;
+
+    if(is_recording){
+        console.log("start");
+        mic_btn.classList.add("is-recording");
+        symbol.innerHTML = "hearing";
+        recognition.start();
+        //speak();
+        transcibe();
+
+    }else{
+        recognition.stop();
+        console.log(content)
+        symbol.innerHTML = "mic";
+
+
+        console.log("end");
+        mic_btn.classList.remove("is-recording");
+        let words = content;
+        content = "";
+        sendData(words);
+        
+
+
+        // chatConvo(words, chain).then(() => convo()); // Call convo again to ask for the next input
+
+    }
+
+    }
+
+    function transcibe(){
+  
+        recognition.addEventListener("result", (e) => {
+            texts.appendChild(p);
+            content = Array.from(e.results)
+              .map((result) => result[0])
+              .map((result) => result.transcript)
+              .join("");
+            // p.innerText = content;
+            if (e.results[0].isFinal) {
+          
+            }
+          });
+      
+    }
+
+    function sendData(words) {
+        
+        fetch('/talk', {
+            method: 'POST',  // HTTP method
+            headers: {
+                'Content-Type': 'application/json'  // Data format being sent
+            },
+            body: JSON.stringify({ data: words })  // Data to send
+        })
+        .then(response => response.json())
+        .then(async data => {
+    console.log('Data received from server:', data);
+        texts.appendChild(p);
+
+                p.innerText = data.text;
+});
+    }
+  </script> 
+</html> 
